@@ -30,9 +30,17 @@ export default function WorldMap({ missions, activeMission, onSelectMission }: P
       maxZoom={6}
       style={{ height: "100%", width: "100%", background: "#080c0a" }}
       zoomControl={false}
+      worldCopyJump={false}
+      maxBounds={[[-90, -180], [90, 180]]}
+      maxBoundsViscosity={1.0}
     >
+      
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+        attribution=""
+      />
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
         attribution=""
       />
       {missions.map((m) => (
