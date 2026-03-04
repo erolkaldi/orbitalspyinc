@@ -24,7 +24,9 @@ const TIER_COLORS: Record<number, string> = {
   3: "#f87171",
 };
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
+import dynamic from "next/dynamic";
+const WorldMap = dynamic(() => import("@/components/WorldMap"), { ssr: false });
 
 const satellites = [
   { id: 1, name: "SAT-01", tier: 1, status: "active", coverage: "EUR" },
@@ -47,7 +49,15 @@ const [activeMission, setActiveMission] = useState<Mission | null>(null);
   const [level, setLevel] = useState(1);
   const [satSlots] = useState(2);
   const [activeTab, setActiveTab] = useState("missions");
+const [currentTime, setCurrentTime] = useState("");
 
+useEffect(() => {
+  setCurrentTime(new Date().toUTCString().slice(0, 25).toUpperCase());
+  const interval = setInterval(() => {
+    setCurrentTime(new Date().toUTCString().slice(0, 25).toUpperCase());
+  }, 1000);
+  return () => clearInterval(interval);
+}, []);
   const handleAccept = (mission:Mission) => {
     setActiveMission(mission);
     setSelectedMission(null);
@@ -223,7 +233,7 @@ const [activeMission, setActiveMission] = useState<Mission | null>(null);
             </button>
           ))}
           <div style={{ marginLeft: "auto", fontSize: "9px", color: "#2d6a35", letterSpacing: "2px" }}>
-            {new Date().toUTCString().slice(0, 25).toUpperCase()} UTC
+            {currentTime} UTC
           </div>
         </div>
 
@@ -273,18 +283,13 @@ const [activeMission, setActiveMission] = useState<Mission | null>(null);
             </div>
           </div>
         ) : (
-          <div style={{
-            flex: 1,
-            background: "#080c0a",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#2d6a35",
-            fontSize: "11px",
-            letterSpacing: "3px",
-          }}>
-            — HARİTA ENTEGRASYONU YAKINDA —
-          </div>
+         <div style={{ flex: 1, overflow: "hidden", height: "calc(100vh - 48px)" }}>
+  <WorldMap
+    missions={missions}
+    activeMission={activeMission}
+    onSelectMission={setSelectedMission}
+  />
+</div>
         )}
       </div>
 
