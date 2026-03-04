@@ -16,10 +16,14 @@ model User {
   accounts      Account[]
   sessions      Session[]
   createdAt     DateTime  @default(now())
-  
+
   money         Int       @default(1000)
   level         Int       @default(1)
   satellites    Satellite[]
+  
+  username      String?   @unique
+  companyName   String?
+  isOnboarded   Boolean   @default(false)
 }
 
 model Satellite {

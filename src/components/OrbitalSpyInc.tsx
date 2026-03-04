@@ -1,4 +1,10 @@
 "use client";
+type Props = {
+  username: string;
+  companyName: string;
+  money: number;
+  level: number;
+}
 type Mission = {
   id: number;
   country: string;
@@ -42,11 +48,11 @@ const missions = [
 
 
 
-export default function OrbitalSpyInc() {
+export default function OrbitalSpyInc({ username, companyName, money: initialMoney, level: initialLevel }: Props) {
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
 const [activeMission, setActiveMission] = useState<Mission | null>(null);
-  const [money, setMoney] = useState(12450);
-  const [level, setLevel] = useState(1);
+const [money, setMoney] = useState(initialMoney);
+const [level, setLevel] = useState(initialLevel);
   const [satSlots] = useState(2);
   const [activeTab, setActiveTab] = useState("missions");
 const [currentTime, setCurrentTime] = useState("");
@@ -84,15 +90,31 @@ useEffect(() => {
         zIndex: 10,
       }}>
         {/* Logo */}
-        <div style={{
-          padding: "20px 24px",
-          borderBottom: "1px solid #1a3a1f",
-          background: "rgba(0,255,80,0.03)",
-        }}>
-          <div style={{ fontSize: "10px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "4px" }}>CLASSIFIED</div>
-          <div style={{ fontSize: "18px", fontWeight: "bold", letterSpacing: "2px", color: "#4ade80" }}>ORBITAL SPY INC</div>
-          <div style={{ fontSize: "9px", letterSpacing: "3px", color: "#2d6a35", marginTop: "2px" }}>GLOBAL INTELLIGENCE SOLUTIONS</div>
-        </div>
+<div style={{
+  padding: "20px 24px",
+  borderBottom: "1px solid #1a3a1f",
+  background: "rgba(0,255,80,0.03)",
+}}>
+  <div style={{ fontSize: "10px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "4px" }}>CLASSIFIED</div>
+  <div style={{ fontSize: "18px", fontWeight: "bold", letterSpacing: "2px", color: "#4ade80" }}>{companyName.toUpperCase()}</div>
+  <div style={{ fontSize: "12px", letterSpacing: "3px", color: "#a3c9a8", marginTop: "2px" }}>CMD: {username}</div><button
+    onClick={() => window.location.href = '/api/auth/signout'}
+    style={{
+      marginTop: "10px",
+      background: "none",
+      border: "1px solid #1a3a1f",
+      color: "#2d6a35",
+      padding: "4px 10px",
+      borderRadius: "3px",
+      fontSize: "9px",
+      letterSpacing: "2px",
+      cursor: "pointer",
+    }}
+  >
+    ÇIKIŞ
+  </button>
+</div>
+        
 
         {/* Oyuncu Stats */}
         <div style={{
