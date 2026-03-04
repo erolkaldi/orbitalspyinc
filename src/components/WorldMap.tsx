@@ -85,6 +85,7 @@ export default function WorldMap({ missions, activeMission, onSelectMission, sat
       worldCopyJump={false}
       maxBounds={[[-85, -180], [85, 180]]}
       maxBoundsViscosity={1.0}
+      attributionControl={false}
     >
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
