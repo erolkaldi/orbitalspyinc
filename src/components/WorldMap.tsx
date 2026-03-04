@@ -22,12 +22,22 @@ const LAUNCH_PADS: Record<string, [number, number]> = {
   baikonur: [45.9646, 63.3052],
 };
 
-function getSatellitePosition(orbitOffset: number): [number, number] {
-  const speed = 0.02;
-  const angle = ((orbitOffset + Date.now() * speed) % 360) * (Math.PI / 180);
-  const lat = Math.sin(angle) * 60;
-  const lng = ((orbitOffset + Date.now() * speed) % 360) - 180;
-  return [lat, lng];
+function getSatellitePosition(sat: SatelliteData): [number, number] {
+  const orbitSpeeds = { LEO: 0.05, MEO: 0.02, GEO: 0 };
+  const speed = orbitSpeeds[sat.orbitType as keyof typeof orbitSpeeds] ?? 0.02;
+
+  if (sat.orbitType === "GEO") {
+  return [0, Math.max(-180, Math.min(180, sat.geoLongitude))];
+}
+
+  const angle = ((sat.orbitOffset + Date.now() * speed) % 360) * (Math.PI / 180);
+  const lat = Math.sin(angle) * sat.inclination;
+  const lng = ((sat.orbitOffset + Date.now() * speed) % 360) - 180;
+
+  return [
+    Math.max(-85, Math.min(85, lat)),
+    Math.max(-180, Math.min(180, lng)),
+  ];
 }
 
 const satIcon = L.divIcon({
@@ -65,17 +75,17 @@ export default function WorldMap({ missions, activeMission, onSelectMission, sat
   }, []);
 
   return (
- <MapContainer
-  center={[20, 0]}
-  zoom={2}
-  minZoom={2.7}
-  maxZoom={6}
-  style={{ height: "100%", width: "100%", background: "#080c0a" }}
-  zoomControl={false}
-  worldCopyJump={false}
-  maxBounds={[[-85, -180], [85, 180]]}
-  maxBoundsViscosity={1.0}
->
+    <MapContainer
+      center={[20, 0]}
+      zoom={2}
+      minZoom={2.7}
+      maxZoom={6}
+      style={{ height: "100%", width: "100%", background: "#080c0a" }}
+      zoomControl={false}
+      worldCopyJump={false}
+      maxBounds={[[-85, -180], [85, 180]]}
+      maxBoundsViscosity={1.0}
+    >
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
         attribution=""
@@ -110,12 +120,12 @@ export default function WorldMap({ missions, activeMission, onSelectMission, sat
             </Marker>
           );
         }
-        const pos = getSatellitePosition(sat.orbitOffset);
+        const pos = getSatellitePosition(sat);
         return (
           <Marker key={`${sat.id}-${tick}`} position={pos} icon={satIcon}>
             <Tooltip>
               <span style={{ fontFamily: "monospace", fontSize: "11px" }}>
-                ⬡ {sat.name} — AKTİF
+                ⬡ {sat.name} · {sat.orbitType} · {sat.inclination}° — AKTİF
               </span>
             </Tooltip>
           </Marker>

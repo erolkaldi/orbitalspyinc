@@ -19,4 +19,5 @@ export type SatelliteData = {
   orbitOffset: number;
   inclination: number;
   orbitType: string;
+  geoLongitude: number;
 }

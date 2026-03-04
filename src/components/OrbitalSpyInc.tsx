@@ -30,21 +30,22 @@ const WorldMap = dynamic(() => import("@/components/WorldMap"), { ssr: false });
 
 
 
-export default function OrbitalSpyInc({ username, companyName, money: initialMoney, level: initialLevel, 
+export default function OrbitalSpyInc({ username, companyName, money: initialMoney, level: initialLevel,
   satellites: initialSatellites, missions }: Props) {
   const [selectedMission, setSelectedMission] = useState<MissionData | null>(null);
   const [activeMission, setActiveMission] = useState<MissionData | null>(null);
   const [money, setMoney] = useState(initialMoney);
   const [level, setLevel] = useState(initialLevel);
   const [satellites, setSatellites] = useState(initialSatellites);
+  const [selectedSat, setSelectedSat] = useState<SatelliteData | null>(null);
   const [satSlots] = useState(2);
   const [activeTab, setActiveTab] = useState("missions");
   const [currentTime, setCurrentTime] = useState("");
-const [showEdit, setShowEdit] = useState(false);
-const [editUsername, setEditUsername] = useState(username);
-const [editCompanyName, setEditCompanyName] = useState(companyName);
-const [editError, setEditError] = useState("");
-const [editLoading, setEditLoading] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editUsername, setEditUsername] = useState(username);
+  const [editCompanyName, setEditCompanyName] = useState(companyName);
+  const [editError, setEditError] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
   useEffect(() => {
     setCurrentTime(new Date().toUTCString().slice(0, 25).toUpperCase());
     const interval = setInterval(() => {
@@ -56,25 +57,25 @@ const [editLoading, setEditLoading] = useState(false);
     setActiveMission(mission);
     setSelectedMission(null);
   };
-const handleEdit = async () => {
-  if (!editUsername.trim() || !editCompanyName.trim()) {
-    setEditError("Tüm alanları doldur.");
-    return;
-  }
-  setEditLoading(true);
-  const res = await fetch("/api/user/update", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: editUsername, companyName: editCompanyName }),
-  });
-  if (res.ok) {
-    window.location.reload();
-  } else {
-    const data = await res.json();
-    setEditError(data.message || "Bir hata oluştu.");
-  }
-  setEditLoading(false);
-};
+  const handleEdit = async () => {
+    if (!editUsername.trim() || !editCompanyName.trim()) {
+      setEditError("Tüm alanları doldur.");
+      return;
+    }
+    setEditLoading(true);
+    const res = await fetch("/api/user/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: editUsername, companyName: editCompanyName }),
+    });
+    if (res.ok) {
+      window.location.reload();
+    } else {
+      const data = await res.json();
+      setEditError(data.message || "Bir hata oluştu.");
+    }
+    setEditLoading(false);
+  };
   return (
     <div style={{
       display: "flex",
@@ -105,39 +106,39 @@ const handleEdit = async () => {
           <div style={{ fontSize: "18px", fontWeight: "bold", letterSpacing: "2px", color: "#4ade80" }}>{companyName.toUpperCase()}</div>
           <div style={{ fontSize: "12px", letterSpacing: "3px", color: "#a3c9a8", marginTop: "2px" }}>CMD: {username}</div>
           <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
-  <button
-    onClick={() => setShowEdit(true)}
-    style={{
-      flex: 1,
-      background: "none",
-      border: "1px solid #1a3a1f",
-      color: "#2d6a35",
-      padding: "4px 10px",
-      borderRadius: "3px",
-      fontSize: "9px",
-      letterSpacing: "2px",
-      cursor: "pointer",
-    }}
-  >
-    DÜZENLE
-  </button>
-  <button
-    onClick={() => window.location.href = '/api/auth/signout'}
-    style={{
-      flex: 1,
-      background: "none",
-      border: "1px solid #1a3a1f",
-      color: "#2d6a35",
-      padding: "4px 10px",
-      borderRadius: "3px",
-      fontSize: "9px",
-      letterSpacing: "2px",
-      cursor: "pointer",
-    }}
-  >
-    ÇIKIŞ
-  </button>
-</div>
+            <button
+              onClick={() => setShowEdit(true)}
+              style={{
+                flex: 1,
+                background: "none",
+                border: "1px solid #1a3a1f",
+                color: "#2d6a35",
+                padding: "4px 10px",
+                borderRadius: "3px",
+                fontSize: "9px",
+                letterSpacing: "2px",
+                cursor: "pointer",
+              }}
+            >
+              DÜZENLE
+            </button>
+            <button
+              onClick={() => window.location.href = '/api/auth/signout'}
+              style={{
+                flex: 1,
+                background: "none",
+                border: "1px solid #1a3a1f",
+                color: "#2d6a35",
+                padding: "4px 10px",
+                borderRadius: "3px",
+                fontSize: "9px",
+                letterSpacing: "2px",
+                cursor: "pointer",
+              }}
+            >
+              ÇIKIŞ
+            </button>
+          </div>
         </div>
 
 
@@ -168,7 +169,8 @@ const handleEdit = async () => {
             padding: "12px",
             marginBottom: "8px",
             textAlign: "center",
-          }}>
+          }}
+          >
             <div style={{ fontSize: "10px", color: "#a3c9a8", marginBottom: "8px", lineHeight: "1.5" }}>
               🛰️ İlk uydun bizden hediye!
             </div>
@@ -216,40 +218,42 @@ const handleEdit = async () => {
                   color: sat ? "#4ade80" : "#1a3a1f",
                 }}>⬡</div>
                 {sat ? (
-  <div style={{ flex: 1 }}>
-    <div style={{ fontSize: "11px", color: "#4ade80", fontWeight: "bold" }}>{sat.name}</div>
-    <div style={{ fontSize: "9px", color: "#2d6a35", letterSpacing: "1px" }}>
-      TİER {sat.tier} · {sat.status === "launching"
-        ? `🚀 ${sat.launchPad === "kennedy" ? "KENNEDY" : "BAIKONUR"}`
-        : "AKTİF"}
-    </div>
-    {sat.status === "launching" && (
-      <button
-        onClick={async () => {
-          const res = await fetch("/api/satellite/launch", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ satelliteId: sat.id }),
-          });
-          if (res.ok) window.location.reload();
-        }}
-        style={{
-          marginTop: "6px",
-          background: "rgba(74,222,128,0.15)",
-          border: "1px solid #4ade80",
-          color: "#4ade80",
-          padding: "3px 8px",
-          borderRadius: "3px",
-          fontSize: "8px",
-          letterSpacing: "2px",
-          cursor: "pointer",
-        }}
-      >
-        ▶ FIRlat
-      </button>
-    )}
-  </div>
-) : (
+                  <div style={{ flex: 1 }}>
+                    <div style={{ cursor: sat && sat.status === 'active' ? 'pointer' : 'default', fontSize: "11px", color: "#4ade80", fontWeight: "bold" }}
+                      onClick={() => sat && sat.status === 'active' && setSelectedSat(sat)}
+                    >{sat.name}</div>
+                    <div style={{ fontSize: "9px", color: "#2d6a35", letterSpacing: "1px" }}>
+                      TİER {sat.tier} · {sat.status === "launching"
+                        ? `🚀 ${sat.launchPad === "kennedy" ? "KENNEDY" : "BAIKONUR"}`
+                        : "AKTİF"}
+                    </div>
+                    {sat.status === "launching" && (
+                      <button
+                        onClick={async () => {
+                          const res = await fetch("/api/satellite/launch", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ satelliteId: sat.id }),
+                          });
+                          if (res.ok) window.location.reload();
+                        }}
+                        style={{
+                          marginTop: "6px",
+                          background: "rgba(74,222,128,0.15)",
+                          border: "1px solid #4ade80",
+                          color: "#4ade80",
+                          padding: "3px 8px",
+                          borderRadius: "3px",
+                          fontSize: "8px",
+                          letterSpacing: "2px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        ▶ FIRlat
+                      </button>
+                    )}
+                  </div>
+                ) : (
                   <div style={{ fontSize: "10px", color: "#1a3a1f", letterSpacing: "1px" }}>BOŞ SLOT</div>
                 )}
               </div>
@@ -309,8 +313,8 @@ const handleEdit = async () => {
         </div>
       </div>
 
-      {/* MERKEZ — Harita + İlanlar */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+{/* Merkez — Harita + İlanlar */}
+<div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 1 }}>
         {/* Üst Bar */}
         <div style={{
           height: "48px",
@@ -470,108 +474,254 @@ const handleEdit = async () => {
           </button>
         </div>
       )}
-{showEdit && (
-  <div style={{
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.7)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 100,
-  }}>
-    <div style={{
-      background: "#0d1a0f",
-      border: "1px solid #1a3a1f",
-      borderRadius: "6px",
-      padding: "40px",
-      width: "360px",
-    }}>
-      <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "8px" }}>AYARLAR</div>
-      <div style={{ fontSize: "18px", color: "#4ade80", letterSpacing: "2px", marginBottom: "28px" }}>PROFİLİ DÜZENLE</div>
-
-      <div style={{ marginBottom: "16px" }}>
-        <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "8px" }}>KULLANICI ADI</div>
-        <input
-          value={editUsername}
-          onChange={(e) => setEditUsername(e.target.value)}
-          style={{
-            width: "100%",
-            background: "rgba(74,222,128,0.05)",
+      {showEdit && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 100,
+        }}>
+          <div style={{
+            background: "#0d1a0f",
             border: "1px solid #1a3a1f",
-            borderRadius: "4px",
-            padding: "10px 12px",
-            color: "#4ade80",
-            fontFamily: "'Courier New', monospace",
-            fontSize: "13px",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
-        />
-      </div>
+            borderRadius: "6px",
+            padding: "40px",
+            width: "360px",
+          }}>
+            <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "8px" }}>AYARLAR</div>
+            <div style={{ fontSize: "18px", color: "#4ade80", letterSpacing: "2px", marginBottom: "28px" }}>PROFİLİ DÜZENLE</div>
 
-      <div style={{ marginBottom: "24px" }}>
-        <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "8px" }}>ŞİRKET ADI</div>
-        <input
-          value={editCompanyName}
-          onChange={(e) => setEditCompanyName(e.target.value)}
-          style={{
-            width: "100%",
-            background: "rgba(74,222,128,0.05)",
-            border: "1px solid #1a3a1f",
-            borderRadius: "4px",
-            padding: "10px 12px",
-            color: "#4ade80",
-            fontFamily: "'Courier New', monospace",
-            fontSize: "13px",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
-        />
-      </div>
+            <div style={{ marginBottom: "16px" }}>
+              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "8px" }}>KULLANICI ADI</div>
+              <input
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
+                style={{
+                  width: "100%",
+                  background: "rgba(74,222,128,0.05)",
+                  border: "1px solid #1a3a1f",
+                  borderRadius: "4px",
+                  padding: "10px 12px",
+                  color: "#4ade80",
+                  fontFamily: "'Courier New', monospace",
+                  fontSize: "13px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
 
-      {editError && (
-        <div style={{ fontSize: "11px", color: "#f87171", marginBottom: "16px" }}>{editError}</div>
+            <div style={{ marginBottom: "24px" }}>
+              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "8px" }}>ŞİRKET ADI</div>
+              <input
+                value={editCompanyName}
+                onChange={(e) => setEditCompanyName(e.target.value)}
+                style={{
+                  width: "100%",
+                  background: "rgba(74,222,128,0.05)",
+                  border: "1px solid #1a3a1f",
+                  borderRadius: "4px",
+                  padding: "10px 12px",
+                  color: "#4ade80",
+                  fontFamily: "'Courier New', monospace",
+                  fontSize: "13px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            {editError && (
+              <div style={{ fontSize: "11px", color: "#f87171", marginBottom: "16px" }}>{editError}</div>
+            )}
+
+            <button
+              onClick={handleEdit}
+              disabled={editLoading}
+              style={{
+                width: "100%",
+                background: "rgba(74,222,128,0.15)",
+                border: "1px solid #4ade80",
+                color: "#4ade80",
+                padding: "12px",
+                borderRadius: "4px",
+                fontSize: "10px",
+                letterSpacing: "3px",
+                cursor: editLoading ? "not-allowed" : "pointer",
+                opacity: editLoading ? 0.6 : 1,
+                marginBottom: "8px",
+              }}
+            >
+              {editLoading ? "KAYDEDİLİYOR..." : "▶ KAYDET"}
+            </button>
+            <button
+              onClick={() => { setShowEdit(false); setEditError(""); }}
+              style={{
+                width: "100%",
+                background: "none",
+                border: "1px solid #1a3a1f",
+                color: "#2d6a35",
+                padding: "10px",
+                borderRadius: "4px",
+                fontSize: "10px",
+                letterSpacing: "2px",
+                cursor: "pointer",
+              }}
+            >
+              İPTAL
+            </button>
+          </div>
+        </div>
       )}
+      {selectedSat && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 100,
+        }}>
+          <div style={{
+            background: "#0d1a0f",
+            border: "1px solid #1a3a1f",
+            borderRadius: "6px",
+            padding: "40px",
+            width: "380px",
+          }}>
+            <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "8px" }}>YÖRÜNGE AYARLARI</div>
+            <div style={{ fontSize: "18px", color: "#4ade80", letterSpacing: "2px", marginBottom: "28px" }}>{selectedSat.name}</div>
 
-      <button
-        onClick={handleEdit}
-        disabled={editLoading}
-        style={{
-          width: "100%",
-          background: "rgba(74,222,128,0.15)",
-          border: "1px solid #4ade80",
-          color: "#4ade80",
-          padding: "12px",
-          borderRadius: "4px",
-          fontSize: "10px",
-          letterSpacing: "3px",
-          cursor: editLoading ? "not-allowed" : "pointer",
-          opacity: editLoading ? 0.6 : 1,
-          marginBottom: "8px",
-        }}
-      >
-        {editLoading ? "KAYDEDİLİYOR..." : "▶ KAYDET"}
-      </button>
-      <button
-        onClick={() => { setShowEdit(false); setEditError(""); }}
-        style={{
-          width: "100%",
-          background: "none",
-          border: "1px solid #1a3a1f",
-          color: "#2d6a35",
-          padding: "10px",
-          borderRadius: "4px",
-          fontSize: "10px",
-          letterSpacing: "2px",
-          cursor: "pointer",
-        }}
-      >
-        İPTAL
-      </button>
-    </div>
-  </div>
-)}
+            {/* Orbit Type */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "10px" }}>YÖRÜNGE TİPİ</div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                {["LEO", "MEO", "GEO"].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedSat({ ...selectedSat, orbitType: type })}
+                    style={{
+                      flex: 1,
+                      background: selectedSat.orbitType === type ? "rgba(74,222,128,0.2)" : "none",
+                      border: `1px solid ${selectedSat.orbitType === type ? "#4ade80" : "#1a3a1f"}`,
+                      color: selectedSat.orbitType === type ? "#4ade80" : "#2d6a35",
+                      padding: "8px",
+                      borderRadius: "4px",
+                      fontSize: "10px",
+                      letterSpacing: "2px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: "9px", color: "#2d6a35", marginTop: "6px" }}>
+                {selectedSat.orbitType === "LEO" && "Alçak yörünge · Hızlı · Dar kapsama"}
+                {selectedSat.orbitType === "MEO" && "Orta yörünge · Dengeli kapsama"}
+                {selectedSat.orbitType === "GEO" && "Sabit yörünge · Geniş kapsama · Sadece ekvator"}
+              </div>
+            </div>
+
+            {/* Inclination */}
+            <div style={{ marginBottom: "28px" }}>
+              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "10px" }}>
+                EĞİM (INCLINATION) — {selectedSat.inclination}°
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={90}
+                value={selectedSat.inclination}
+                onChange={(e) => setSelectedSat({ ...selectedSat, inclination: Number(e.target.value) })}
+                style={{ width: "100%", accentColor: "#4ade80" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", color: "#2d6a35", marginTop: "4px" }}>
+                <span>0° Ekvator</span>
+                <span>45° Orta</span>
+                <span>90° Kutup</span>
+              </div>
+              <div style={{ fontSize: "9px", color: "#a3c9a8", marginTop: "8px" }}>
+                {selectedSat.inclination < 30 && "Kapsama: Ekvator bölgesi (Afrika, G. Amerika, G.D. Asya)"}
+                {selectedSat.inclination >= 30 && selectedSat.inclination < 60 && "Kapsama: Orta enlemler (Avrupa, ABD, Çin, Japonya)"}
+                {selectedSat.inclination >= 60 && "Kapsama: Tüm enlemler dahil kutup bölgeleri"}
+              </div>
+            </div>
+            {selectedSat.orbitType === "GEO" && (
+              <div style={{ marginBottom: "28px" }}>
+                <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "10px" }}>
+                  SABİT KONUM (BOYLAM) — {selectedSat.geoLongitude}°
+                </div>
+                <input
+                  type="range"
+                  min={-180}
+                  max={180}
+                  value={selectedSat.geoLongitude}
+                  onChange={(e) => setSelectedSat({ ...selectedSat, geoLongitude: Number(e.target.value) })}
+                  style={{ width: "100%", accentColor: "#4ade80" }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", color: "#2d6a35", marginTop: "4px" }}>
+                  <span>-180° Batı</span>
+                  <span>0° Meridyen</span>
+                  <span>180° Doğu</span>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={async () => {
+                const res = await fetch("/api/satellite/update-orbit", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    satelliteId: selectedSat.id,
+                    inclination: selectedSat.inclination,
+                    orbitType: selectedSat.orbitType,
+                    geoLongitude: selectedSat.geoLongitude,
+                  }),
+                });
+                if (res.ok) {
+                  setSatellites(satellites.map(s => s.id === selectedSat.id ? selectedSat : s));
+                  setSelectedSat(null);
+                }
+              }}
+              style={{
+                width: "100%",
+                background: "rgba(74,222,128,0.15)",
+                border: "1px solid #4ade80",
+                color: "#4ade80",
+                padding: "12px",
+                borderRadius: "4px",
+                fontSize: "10px",
+                letterSpacing: "3px",
+                cursor: "pointer",
+                marginBottom: "8px",
+              }}
+            >
+              ▶ KAYDET
+            </button>
+            <button
+              onClick={() => setSelectedSat(null)}
+              style={{
+                width: "100%",
+                background: "none",
+                border: "1px solid #1a3a1f",
+                color: "#2d6a35",
+                padding: "10px",
+                borderRadius: "4px",
+                fontSize: "10px",
+                letterSpacing: "2px",
+                cursor: "pointer",
+              }}
+            >
+              İPTAL
+            </button>
+          </div>
+        </div>
+      )}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }

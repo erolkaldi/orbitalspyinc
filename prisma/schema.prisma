@@ -40,6 +40,7 @@ model Satellite {
   
   inclination  Float    @default(0)
   orbitType    String   @default("LEO")
+  geoLongitude  Float    @default(0)
 }
 
 model Account {
