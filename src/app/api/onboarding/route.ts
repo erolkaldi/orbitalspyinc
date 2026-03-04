@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-
+  
   if (!session?.user?.email) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
   }
@@ -24,12 +24,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Bu kullanıcı adı alınmış.' }, { status: 400 })
   }
 
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { email: session.user.email },
     data: {
       username,
       companyName,
       isOnboarded: true,
+    },
+  })
+
+  await prisma.satellite.create({
+    data: {
+      name: 'SAT-01',
+      tier: 1,
+      userId: user.id,
+      status: 'launching',
+      launchPad: 'kennedy',
+      orbitOffset: Math.random() * 360,
     },
   })
 

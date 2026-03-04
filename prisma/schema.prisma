@@ -27,12 +27,16 @@ model User {
 }
 
 model Satellite {
-  id        String   @id @default(cuid())
-  name      String
-  tier      Int      @default(1)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  name         String
+  tier         Int      @default(1)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  
+  status       String   @default("launching") // launching, active
+  launchPad    String   @default("kennedy")
+  orbitOffset  Float    @default(0) // 0-360 arası başlangıç açısı
 }
 
 model Account {

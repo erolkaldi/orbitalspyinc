@@ -13,6 +13,7 @@ export default async function Home() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email! },
+    include: { satellites: true },
   })
 
   if (!user?.isOnboarded) {
@@ -25,6 +26,7 @@ export default async function Home() {
       companyName={user!.companyName!}
       money={user!.money}
       level={user!.level}
+      satellites={user!.satellites}
     />
   )
 }
