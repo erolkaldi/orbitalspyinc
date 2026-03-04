@@ -80,17 +80,17 @@ export default function WorldMap({ missions, activeMission, onSelectMission, sat
   }, []);
 
   return (
-    <MapContainer
-      center={[20, 0]}
-      zoom={2}
-      minZoom={2}
-      maxZoom={6}
-      style={{ height: "100%", width: "100%", background: "#080c0a" }}
-      zoomControl={false}
-      worldCopyJump={false}
-      maxBounds={[[-90, -180], [90, 180]]}
-      maxBoundsViscosity={1.0}
-    >
+ <MapContainer
+  center={[20, 0]}
+  zoom={2}
+  minZoom={2.7}
+  maxZoom={6}
+  style={{ height: "100%", width: "100%", background: "#080c0a" }}
+  zoomControl={false}
+  worldCopyJump={false}
+  maxBounds={[[-85, -180], [85, 180]]}
+  maxBoundsViscosity={1.0}
+>
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
         attribution=""

@@ -59,7 +59,11 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
   const [satSlots] = useState(2);
   const [activeTab, setActiveTab] = useState("missions");
   const [currentTime, setCurrentTime] = useState("");
-
+const [showEdit, setShowEdit] = useState(false);
+const [editUsername, setEditUsername] = useState(username);
+const [editCompanyName, setEditCompanyName] = useState(companyName);
+const [editError, setEditError] = useState("");
+const [editLoading, setEditLoading] = useState(false);
   useEffect(() => {
     setCurrentTime(new Date().toUTCString().slice(0, 25).toUpperCase());
     const interval = setInterval(() => {
@@ -71,7 +75,25 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
     setActiveMission(mission);
     setSelectedMission(null);
   };
-
+const handleEdit = async () => {
+  if (!editUsername.trim() || !editCompanyName.trim()) {
+    setEditError("Tüm alanları doldur.");
+    return;
+  }
+  setEditLoading(true);
+  const res = await fetch("/api/user/update", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: editUsername, companyName: editCompanyName }),
+  });
+  if (res.ok) {
+    window.location.reload();
+  } else {
+    const data = await res.json();
+    setEditError(data.message || "Bir hata oluştu.");
+  }
+  setEditLoading(false);
+};
   return (
     <div style={{
       display: "flex",
@@ -100,22 +122,41 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
         }}>
           <div style={{ fontSize: "10px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "4px" }}>CLASSIFIED</div>
           <div style={{ fontSize: "18px", fontWeight: "bold", letterSpacing: "2px", color: "#4ade80" }}>{companyName.toUpperCase()}</div>
-          <div style={{ fontSize: "12px", letterSpacing: "3px", color: "#a3c9a8", marginTop: "2px" }}>CMD: {username}</div><button
-            onClick={() => window.location.href = '/api/auth/signout'}
-            style={{
-              marginTop: "10px",
-              background: "none",
-              border: "1px solid #1a3a1f",
-              color: "#2d6a35",
-              padding: "4px 10px",
-              borderRadius: "3px",
-              fontSize: "9px",
-              letterSpacing: "2px",
-              cursor: "pointer",
-            }}
-          >
-            ÇIKIŞ
-          </button>
+          <div style={{ fontSize: "12px", letterSpacing: "3px", color: "#a3c9a8", marginTop: "2px" }}>CMD: {username}</div>
+          <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+  <button
+    onClick={() => setShowEdit(true)}
+    style={{
+      flex: 1,
+      background: "none",
+      border: "1px solid #1a3a1f",
+      color: "#2d6a35",
+      padding: "4px 10px",
+      borderRadius: "3px",
+      fontSize: "9px",
+      letterSpacing: "2px",
+      cursor: "pointer",
+    }}
+  >
+    DÜZENLE
+  </button>
+  <button
+    onClick={() => window.location.href = '/api/auth/signout'}
+    style={{
+      flex: 1,
+      background: "none",
+      border: "1px solid #1a3a1f",
+      color: "#2d6a35",
+      padding: "4px 10px",
+      borderRadius: "3px",
+      fontSize: "9px",
+      letterSpacing: "2px",
+      cursor: "pointer",
+    }}
+  >
+    ÇIKIŞ
+  </button>
+</div>
         </div>
 
 
@@ -194,15 +235,40 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
                   color: sat ? "#4ade80" : "#1a3a1f",
                 }}>⬡</div>
                 {sat ? (
-                  <div>
-                    <div style={{ fontSize: "11px", color: "#4ade80", fontWeight: "bold" }}>{sat.name}</div>
-                    <div style={{ fontSize: "9px", color: "#2d6a35", letterSpacing: "1px" }}>
-                      TİER {sat.tier} · {sat.status === "launching"
-                        ? `🚀 ${sat.launchPad === "kennedy" ? "KENNEDY" : "BAIKONUR"}`
-                        : "AKTİF"}
-                    </div>
-                  </div>
-                ) : (
+  <div style={{ flex: 1 }}>
+    <div style={{ fontSize: "11px", color: "#4ade80", fontWeight: "bold" }}>{sat.name}</div>
+    <div style={{ fontSize: "9px", color: "#2d6a35", letterSpacing: "1px" }}>
+      TİER {sat.tier} · {sat.status === "launching"
+        ? `🚀 ${sat.launchPad === "kennedy" ? "KENNEDY" : "BAIKONUR"}`
+        : "AKTİF"}
+    </div>
+    {sat.status === "launching" && (
+      <button
+        onClick={async () => {
+          const res = await fetch("/api/satellite/launch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ satelliteId: sat.id }),
+          });
+          if (res.ok) window.location.reload();
+        }}
+        style={{
+          marginTop: "6px",
+          background: "rgba(74,222,128,0.15)",
+          border: "1px solid #4ade80",
+          color: "#4ade80",
+          padding: "3px 8px",
+          borderRadius: "3px",
+          fontSize: "8px",
+          letterSpacing: "2px",
+          cursor: "pointer",
+        }}
+      >
+        ▶ FIRlat
+      </button>
+    )}
+  </div>
+) : (
                   <div style={{ fontSize: "10px", color: "#1a3a1f", letterSpacing: "1px" }}>BOŞ SLOT</div>
                 )}
               </div>
@@ -423,7 +489,108 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
           </button>
         </div>
       )}
+{showEdit && (
+  <div style={{
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 100,
+  }}>
+    <div style={{
+      background: "#0d1a0f",
+      border: "1px solid #1a3a1f",
+      borderRadius: "6px",
+      padding: "40px",
+      width: "360px",
+    }}>
+      <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "8px" }}>AYARLAR</div>
+      <div style={{ fontSize: "18px", color: "#4ade80", letterSpacing: "2px", marginBottom: "28px" }}>PROFİLİ DÜZENLE</div>
 
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "8px" }}>KULLANICI ADI</div>
+        <input
+          value={editUsername}
+          onChange={(e) => setEditUsername(e.target.value)}
+          style={{
+            width: "100%",
+            background: "rgba(74,222,128,0.05)",
+            border: "1px solid #1a3a1f",
+            borderRadius: "4px",
+            padding: "10px 12px",
+            color: "#4ade80",
+            fontFamily: "'Courier New', monospace",
+            fontSize: "13px",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
+      <div style={{ marginBottom: "24px" }}>
+        <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "8px" }}>ŞİRKET ADI</div>
+        <input
+          value={editCompanyName}
+          onChange={(e) => setEditCompanyName(e.target.value)}
+          style={{
+            width: "100%",
+            background: "rgba(74,222,128,0.05)",
+            border: "1px solid #1a3a1f",
+            borderRadius: "4px",
+            padding: "10px 12px",
+            color: "#4ade80",
+            fontFamily: "'Courier New', monospace",
+            fontSize: "13px",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
+      {editError && (
+        <div style={{ fontSize: "11px", color: "#f87171", marginBottom: "16px" }}>{editError}</div>
+      )}
+
+      <button
+        onClick={handleEdit}
+        disabled={editLoading}
+        style={{
+          width: "100%",
+          background: "rgba(74,222,128,0.15)",
+          border: "1px solid #4ade80",
+          color: "#4ade80",
+          padding: "12px",
+          borderRadius: "4px",
+          fontSize: "10px",
+          letterSpacing: "3px",
+          cursor: editLoading ? "not-allowed" : "pointer",
+          opacity: editLoading ? 0.6 : 1,
+          marginBottom: "8px",
+        }}
+      >
+        {editLoading ? "KAYDEDİLİYOR..." : "▶ KAYDET"}
+      </button>
+      <button
+        onClick={() => { setShowEdit(false); setEditError(""); }}
+        style={{
+          width: "100%",
+          background: "none",
+          border: "1px solid #1a3a1f",
+          color: "#2d6a35",
+          padding: "10px",
+          borderRadius: "4px",
+          fontSize: "10px",
+          letterSpacing: "2px",
+          cursor: "pointer",
+        }}
+      >
+        İPTAL
+      </button>
+    </div>
+  </div>
+)}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
