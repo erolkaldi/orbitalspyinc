@@ -20,6 +20,8 @@ export default async function Home() {
     redirect('/onboarding')
   }
 
+  const missions = await prisma.mission.findMany()
+
   return (
     <OrbitalSpyInc
       username={user!.username!}
@@ -27,6 +29,7 @@ export default async function Home() {
       money={user!.money}
       level={user!.level}
       satellites={user!.satellites}
+      missions={missions}
     />
   )
 }

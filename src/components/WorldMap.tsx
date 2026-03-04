@@ -4,31 +4,16 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Tooltip, Marker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { MissionData, SatelliteData } from "@/types/game";
 
-type Mission = {
-  id: number;
-  country: string;
-  flag: string;
-  title: string;
-  reward: number;
-  tier: number;
-  urgent: boolean;
-  region: number[];
-};
 
-type SatelliteData = {
-  id: string;
-  name: string;
-  tier: number;
-  status: string;
-  launchPad: string;
-  orbitOffset: number;
-};
+
+
 
 type Props = {
-  missions: Mission[];
-  activeMission: Mission | null;
-  onSelectMission: (mission: Mission) => void;
+  missions: MissionData[];
+  activeMission: MissionData | null;
+  onSelectMission: (mission: MissionData) => void;
   satellites: SatelliteData[];
 };
 
@@ -141,7 +126,7 @@ export default function WorldMap({ missions, activeMission, onSelectMission, sat
       {missions.map((m) => (
         <CircleMarker
           key={m.id}
-          center={[m.region[0], m.region[1]]}
+          center={[m.latitude, m.longitude]}
           radius={m.urgent ? 10 : 7}
           pathOptions={{
             color: activeMission?.id === m.id ? "#4ade80" : m.urgent ? "#f87171" : "#2d6a35",

@@ -34,9 +34,12 @@ model Satellite {
   user         User     @relation(fields: [userId], references: [id])
   createdAt    DateTime @default(now())
   
-  status       String   @default("launching") // launching, active
+  status       String   @default("launching")
   launchPad    String   @default("kennedy")
-  orbitOffset  Float    @default(0) // 0-360 arası başlangıç açısı
+  orbitOffset  Float    @default(0)
+  
+  inclination  Float    @default(0)
+  orbitType    String   @default("LEO")
 }
 
 model Account {
@@ -63,4 +66,17 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Mission {
+  id          String   @id @default(cuid())
+  country     String
+  flag        String
+  title       String
+  reward      Int
+  tier        Int      @default(1)
+  urgent      Boolean  @default(false)
+  latitude    Float
+  longitude   Float
+  createdAt   DateTime @default(now())
 }

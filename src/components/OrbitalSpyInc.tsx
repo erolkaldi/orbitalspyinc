@@ -1,12 +1,5 @@
 "use client";
-type SatelliteData = {
-  id: string;
-  name: string;
-  tier: number;
-  status: string;
-  launchPad: string;
-  orbitOffset: number;
-}
+
 
 type Props = {
   username: string;
@@ -14,17 +7,9 @@ type Props = {
   money: number;
   level: number;
   satellites: SatelliteData[];
+  missions: MissionData[];
 }
-type Mission = {
-  id: number;
-  country: string;
-  flag: string;
-  title: string;
-  reward: number;
-  tier: number;
-  urgent: boolean;
-  region: number[];
-};
+
 
 
 
@@ -36,23 +21,19 @@ const TIER_COLORS: Record<number, string> = {
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { MissionData, SatelliteData } from "@/types/game";
 const WorldMap = dynamic(() => import("@/components/WorldMap"), { ssr: false });
 
 
 
-const missions = [
-  { id: 1, country: "Almanya", flag: "🇩🇪", title: "Doğu sınırı askeri hareket izleme", reward: 4200, tier: 1, urgent: true, region: [52, 13] },
-  { id: 2, country: "Japonya", flag: "🇯🇵", title: "Nükleer tesis inşaat raporu", reward: 8800, tier: 2, urgent: false, region: [35, 139] },
-  { id: 3, country: "Brezilya", flag: "🇧🇷", title: "Amazon kaynak tespiti", reward: 3100, tier: 1, urgent: false, region: [-15, -47] },
-  { id: 4, country: "Hindistan", flag: "🇮🇳", title: "Kuzey sınırı hava sahası analizi", reward: 5500, tier: 2, urgent: true, region: [28, 77] },
-  { id: 5, country: "Norveç", flag: "🇳🇴", title: "Arktik buz örtüsü değişim raporu", reward: 2900, tier: 1, urgent: false, region: [60, 8] },
-];
 
 
 
-export default function OrbitalSpyInc({ username, companyName, money: initialMoney, level: initialLevel, satellites: initialSatellites }: Props) {
-  const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
-  const [activeMission, setActiveMission] = useState<Mission | null>(null);
+
+export default function OrbitalSpyInc({ username, companyName, money: initialMoney, level: initialLevel, 
+  satellites: initialSatellites, missions }: Props) {
+  const [selectedMission, setSelectedMission] = useState<MissionData | null>(null);
+  const [activeMission, setActiveMission] = useState<MissionData | null>(null);
   const [money, setMoney] = useState(initialMoney);
   const [level, setLevel] = useState(initialLevel);
   const [satellites, setSatellites] = useState(initialSatellites);
@@ -71,7 +52,7 @@ const [editLoading, setEditLoading] = useState(false);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-  const handleAccept = (mission: Mission) => {
+  const handleAccept = (mission: MissionData) => {
     setActiveMission(mission);
     setSelectedMission(null);
   };
