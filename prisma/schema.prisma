@@ -24,6 +24,7 @@ model User {
   username      String?   @unique
   companyName   String?
   isOnboarded   Boolean   @default(false)
+  assignments MissionAssignment[]
 }
 
 model Satellite {
@@ -41,6 +42,7 @@ model Satellite {
   inclination  Float    @default(0)
   orbitType    String   @default("LEO")
   geoLongitude  Float    @default(0)
+  assignments MissionAssignment[]
 }
 
 model Account {
@@ -80,4 +82,18 @@ model Mission {
   latitude    Float
   longitude   Float
   createdAt   DateTime @default(now())
+
+  assignments MissionAssignment[]
+}
+model MissionAssignment {
+  id          String   @id @default(cuid())
+  missionId   String
+  satelliteId String
+  userId      String
+  status      String   @default("active") // active, completed, failed
+  startedAt   DateTime @default(now())
+
+  mission     Mission   @relation(fields: [missionId], references: [id])
+  satellite   Satellite @relation(fields: [satelliteId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
 }

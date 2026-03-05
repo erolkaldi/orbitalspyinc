@@ -12,24 +12,26 @@ export default async function Home() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email! },
-    include: { satellites: true },
-  })
+  where: { email: session.user.email! },
+  include: { 
+    satellites: true,
+    assignments: {
+      where: { status: 'active' },
+    },
+  },
+})
 
-  if (!user?.isOnboarded) {
-    redirect('/onboarding')
-  }
+const missions = await prisma.mission.findMany()
 
-  const missions = await prisma.mission.findMany()
-
-  return (
-    <OrbitalSpyInc
-      username={user!.username!}
-      companyName={user!.companyName!}
-      money={user!.money}
-      level={user!.level}
-      satellites={user!.satellites}
-      missions={missions}
-    />
-  )
+return (
+  <OrbitalSpyInc
+    username={user!.username!}
+    companyName={user!.companyName!}
+    money={user!.money}
+    level={user!.level}
+    satellites={user!.satellites}
+    missions={missions}
+    assignments={user!.assignments}
+  />
+)
 }

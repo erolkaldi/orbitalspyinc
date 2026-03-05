@@ -21,3 +21,11 @@ export type SatelliteData = {
   orbitType: string;
   geoLongitude: number;
 }
+export type MissionAssignment = {
+  id: string;
+  missionId: string;
+  satelliteId: string;
+  userId: string;
+  status: string;
+  startedAt: Date;
+}
