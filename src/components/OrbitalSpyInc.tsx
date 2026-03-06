@@ -24,7 +24,13 @@ const TIER_COLORS: Record<number, string> = {
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { MissionData, SatelliteData, MissionAssignment } from "@/types/game";
-import { TIER_LIMITS, SHOP_PRICES, SLOT_PER_LEVEL } from '@/lib/gameConfig';
+import {  SLOT_PER_LEVEL } from '@/lib/gameConfig';
+import EditProfileModal from '@/components/modals/EditProfileModal'
+import ShopModal from '@/components/modals/ShopModal'
+import OrbitModal from '@/components/modals/OrbitModal'
+import SatSelectModal from '@/components/modals/SatSelectModal'
+import CancelConfirmModal from '@/components/modals/CancelConfirmModal'
+import MissionDetailPanel from "./modals/MissionDetailPanel";
 const WorldMap = dynamic(() => import("@/components/WorldMap"), { ssr: false });
 
 
@@ -440,638 +446,105 @@ const [showCancelConfirm, setShowCancelConfirm] = useState(false);
           </div>
         )}
       </div>
-
-      {/* SAĞ PANEL — Görev Detayı */}
-      {selectedMission && (
-        <div style={{
-          width: "280px",
-          minWidth: "280px",
-          background: "#0d1a0f",
-          borderLeft: "1px solid #1a3a1f",
-          display: "flex",
-          flexDirection: "column",
-          padding: "24px",
-        }}>
-          <div style={{ fontSize: "9px", letterSpacing: "3px", color: "#2d6a35", marginBottom: "16px" }}>GÖREV DETAYI</div>
-
-          <div style={{ fontSize: "32px", marginBottom: "8px" }}>{selectedMission.flag}</div>
-          <div style={{ fontSize: "14px", color: "#4ade80", letterSpacing: "2px", marginBottom: "4px" }}>{selectedMission.country.toUpperCase()}</div>
-          <div style={{ fontSize: "12px", color: "#a3c9a8", lineHeight: "1.6", marginBottom: "20px" }}>{selectedMission.title}</div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
-            {[
-              { label: "ÖDÜL", value: `$${selectedMission.reward.toLocaleString()}` },
-              { label: "GEREKLİ TİER", value: `T${selectedMission.tier}` },
-              { label: "ÖNCELİK", value: selectedMission.urgent ? "ACİL" : "NORMAL" },
-            ].map(({ label, value }) => (
-              <div key={label} style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "8px 0",
-                borderBottom: "1px solid #1a3a1f",
-              }}>
-                <span style={{ fontSize: "9px", color: "#2d6a35", letterSpacing: "2px" }}>{label}</span>
-                <span style={{ fontSize: "11px", color: "#4ade80" }}>{value}</span>
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={() => handleAccept(selectedMission)}
-            style={{
-              background: "rgba(74,222,128,0.15)",
-              border: "1px solid #4ade80",
-              color: "#4ade80",
-              padding: "12px",
-              borderRadius: "4px",
-              fontSize: "10px",
-              letterSpacing: "3px",
-              cursor: "pointer",
-              marginBottom: "8px",
-            }}
-          >
-            ▶ GÖREVİ KABUL ET
-          </button>
-          <button
-            onClick={() => setSelectedMission(null)}
-            style={{
-              background: "none",
-              border: "1px solid #1a3a1f",
-              color: "#2d6a35",
-              padding: "10px",
-              borderRadius: "4px",
-              fontSize: "10px",
-              letterSpacing: "2px",
-              cursor: "pointer",
-            }}
-          >
-            İPTAL
-          </button>
-        </div>
-      )}
-      {showEdit && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 100,
-        }}>
-          <div style={{
-            background: "#0d1a0f",
-            border: "1px solid #1a3a1f",
-            borderRadius: "6px",
-            padding: "40px",
-            width: "360px",
-          }}>
-            <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "8px" }}>AYARLAR</div>
-            <div style={{ fontSize: "18px", color: "#4ade80", letterSpacing: "2px", marginBottom: "28px" }}>PROFİLİ DÜZENLE</div>
-
-            <div style={{ marginBottom: "16px" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "8px" }}>KULLANICI ADI</div>
-              <input
-                value={editUsername}
-                onChange={(e) => setEditUsername(e.target.value)}
-                style={{
-                  width: "100%",
-                  background: "rgba(74,222,128,0.05)",
-                  border: "1px solid #1a3a1f",
-                  borderRadius: "4px",
-                  padding: "10px 12px",
-                  color: "#4ade80",
-                  fontFamily: "'Courier New', monospace",
-                  fontSize: "13px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "24px" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "8px" }}>ŞİRKET ADI</div>
-              <input
-                value={editCompanyName}
-                onChange={(e) => setEditCompanyName(e.target.value)}
-                style={{
-                  width: "100%",
-                  background: "rgba(74,222,128,0.05)",
-                  border: "1px solid #1a3a1f",
-                  borderRadius: "4px",
-                  padding: "10px 12px",
-                  color: "#4ade80",
-                  fontFamily: "'Courier New', monospace",
-                  fontSize: "13px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            {editError && (
-              <div style={{ fontSize: "11px", color: "#f87171", marginBottom: "16px" }}>{editError}</div>
-            )}
-
-            <button
-              onClick={handleEdit}
-              disabled={editLoading}
-              style={{
-                width: "100%",
-                background: "rgba(74,222,128,0.15)",
-                border: "1px solid #4ade80",
-                color: "#4ade80",
-                padding: "12px",
-                borderRadius: "4px",
-                fontSize: "10px",
-                letterSpacing: "3px",
-                cursor: editLoading ? "not-allowed" : "pointer",
-                opacity: editLoading ? 0.6 : 1,
-                marginBottom: "8px",
-              }}
-            >
-              {editLoading ? "KAYDEDİLİYOR..." : "▶ KAYDET"}
-            </button>
-            <button
-              onClick={() => { setShowEdit(false); setEditError(""); }}
-              style={{
-                width: "100%",
-                background: "none",
-                border: "1px solid #1a3a1f",
-                color: "#2d6a35",
-                padding: "10px",
-                borderRadius: "4px",
-                fontSize: "10px",
-                letterSpacing: "2px",
-                cursor: "pointer",
-              }}
-            >
-              İPTAL
-            </button>
-          </div>
-        </div>
-      )}
-      {selectedSat && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 100,
-        }}>
-          <div style={{
-            background: "#0d1a0f",
-            border: "1px solid #1a3a1f",
-            borderRadius: "6px",
-            padding: "40px",
-            width: "380px",
-          }}>
-            <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "8px" }}>YÖRÜNGE AYARLARI</div>
-            <div style={{ fontSize: "18px", color: "#4ade80", letterSpacing: "2px", marginBottom: "28px" }}>{selectedSat.name}</div>
-
-            {/* Orbit Type */}
-            <div style={{ marginBottom: "20px" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "10px" }}>YÖRÜNGE TİPİ</div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                {["LEO", "MEO", "GEO"].map((type) => {
-                  const limits = TIER_LIMITS[selectedSat.tier as keyof typeof TIER_LIMITS];
-                  const locked = !limits.orbitTypes.includes(type as any);
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => !locked && setSelectedSat({ ...selectedSat, orbitType: type })}
-                      style={{
-                        flex: 1,
-                        background: selectedSat.orbitType === type ? "rgba(74,222,128,0.2)" : "none",
-                        border: `1px solid ${locked ? "#111f14" : selectedSat.orbitType === type ? "#4ade80" : "#1a3a1f"}`,
-                        color: locked ? "#1a3a1f" : selectedSat.orbitType === type ? "#4ade80" : "#2d6a35",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        fontSize: "10px",
-                        letterSpacing: "2px",
-                        cursor: locked ? "not-allowed" : "pointer",
-                        opacity: locked ? 0.4 : 1,
-                      }}
-                    >
-                      {locked ? "🔒" : ""} {type}
-                    </button>
-                  );
-                })}
-              </div>
-              <div style={{ fontSize: "9px", color: "#2d6a35", marginTop: "6px" }}>
-                {selectedSat.orbitType === "LEO" && "Alçak yörünge · Hızlı · Dar kapsama"}
-                {selectedSat.orbitType === "MEO" && "Orta yörünge · Dengeli kapsama"}
-                {selectedSat.orbitType === "GEO" && "Sabit yörünge · Geniş kapsama · Sadece ekvator"}
-              </div>
-            </div>
-
-            {/* Inclination */}
-            <div style={{ marginBottom: "28px" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "10px" }}>
-                EĞİM (INCLINATION) — {selectedSat.inclination}°
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={90}
-                value={selectedSat.inclination}
-                onChange={(e) => setSelectedSat({ ...selectedSat, inclination: Number(e.target.value) })}
-                style={{ width: "100%", accentColor: "#4ade80" }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", color: "#2d6a35", marginTop: "4px" }}>
-                <span>0° Ekvator</span>
-                <span>45° Orta</span>
-                <span>90° Kutup</span>
-              </div>
-              <div style={{ fontSize: "9px", color: "#a3c9a8", marginTop: "8px" }}>
-                {selectedSat.inclination < 30 && "Kapsama: Ekvator bölgesi (Afrika, G. Amerika, G.D. Asya)"}
-                {selectedSat.inclination >= 30 && selectedSat.inclination < 60 && "Kapsama: Orta enlemler (Avrupa, ABD, Çin, Japonya)"}
-                {selectedSat.inclination >= 60 && "Kapsama: Tüm enlemler dahil kutup bölgeleri"}
-              </div>
-            </div>
-            {selectedSat.orbitType === "GEO" && (
-              <div style={{ marginBottom: "28px" }}>
-                <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#2d6a35", marginBottom: "10px" }}>
-                  SABİT KONUM (BOYLAM) — {selectedSat.geoLongitude}°
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={TIER_LIMITS[selectedSat.tier as keyof typeof TIER_LIMITS].maxInclination}
-                  value={selectedSat.inclination}
-                  onChange={(e) => setSelectedSat({ ...selectedSat, inclination: Number(e.target.value) })}
-                  style={{ width: "100%", accentColor: "#4ade80" }}
-                />
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", color: "#2d6a35", marginTop: "4px" }}>
-                  <span>-180° Batı</span>
-                  <span>0° Meridyen</span>
-                  <span>180° Doğu</span>
-                </div>
-              </div>
-            )}
-            <button
-              onClick={async () => {
-                const res = await fetch("/api/satellite/update-orbit", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    satelliteId: selectedSat.id,
-                    inclination: selectedSat.inclination,
-                    orbitType: selectedSat.orbitType,
-                    geoLongitude: selectedSat.geoLongitude,
-                  }),
-                });
-                if (res.ok) {
-                  setSatellites(satellites.map(s => s.id === selectedSat.id ? selectedSat : s));
-                  setSelectedSat(null);
-                }
-              }}
-              style={{
-                width: "100%",
-                background: "rgba(74,222,128,0.15)",
-                border: "1px solid #4ade80",
-                color: "#4ade80",
-                padding: "12px",
-                borderRadius: "4px",
-                fontSize: "10px",
-                letterSpacing: "3px",
-                cursor: "pointer",
-                marginBottom: "8px",
-              }}
-            >
-              ▶ KAYDET
-            </button>
-            <button
-              onClick={() => setSelectedSat(null)}
-              style={{
-                width: "100%",
-                background: "none",
-                border: "1px solid #1a3a1f",
-                color: "#2d6a35",
-                padding: "10px",
-                borderRadius: "4px",
-                fontSize: "10px",
-                letterSpacing: "2px",
-                cursor: "pointer",
-              }}
-            >
-              İPTAL
-            </button>
-          </div>
-        </div>
-      )}
-      {showShop && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 100,
-        }}>
-          <div style={{
-            background: "#0d1a0f",
-            border: "1px solid #1a3a1f",
-            borderRadius: "6px",
-            padding: "40px",
-            width: "420px",
-          }}>
-            <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "8px" }}>MAĞAZA</div>
-            <div style={{ fontSize: "18px", color: "#4ade80", letterSpacing: "2px", marginBottom: "8px" }}>UYDU MAĞAZASI</div>
-            <div style={{ fontSize: "11px", color: "#2d6a35", marginBottom: "28px" }}>BAKİYE: ${money.toLocaleString()}</div>
-
-            {/* Yeni Uydu */}
-            <div style={{
-              background: "rgba(74,222,128,0.05)",
-              border: "1px solid #1a3a1f",
-              borderRadius: "4px",
-              padding: "16px",
-              marginBottom: "12px",
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                <div>
-                  <div style={{ fontSize: "12px", color: "#a3c9a8" }}>Yeni Uydu — Tier 1</div>
-                  <div style={{ fontSize: "9px", color: "#2d6a35", marginTop: "4px" }}>LEO · Max 30° inclination</div>
-                </div>
-                <div style={{ fontSize: "16px", color: "#4ade80" }}>${SHOP_PRICES.newSatellite.toLocaleString()}</div>
-              </div>
-              <button
-                onClick={async () => {
-                  if (money < SHOP_PRICES.newSatellite) return;
-                  if (satellites.length >= level * SLOT_PER_LEVEL) return;
-                  const res = await fetch("/api/shop/buy-satellite", { method: "POST" });
-                  if (res.ok) window.location.reload();
-                }}
-                disabled={money < SHOP_PRICES.newSatellite || satellites.length >= level * SLOT_PER_LEVEL}
-                style={{
-                  width: "100%",
-                  background: "rgba(74,222,128,0.15)",
-                  border: "1px solid #4ade80",
-                  color: "#4ade80",
-                  padding: "8px",
-                  borderRadius: "4px",
-                  fontSize: "9px",
-                  letterSpacing: "2px",
-                  cursor: "pointer",
-                  opacity: money < SHOP_PRICES.newSatellite || satellites.length >= level * SLOT_PER_LEVEL ? 0.4 : 1,
-                }}
-              >
-                {satellites.length >= level * SLOT_PER_LEVEL ? "🔒 SLOT DOLU" : "▶ SATIN AL"}
-              </button>
-            </div>
-
-            {/* Yükseltme */}
-            {satellites.filter(s => s.tier < 3).map(sat => (
-              <div key={sat.id} style={{
-                background: "rgba(74,222,128,0.05)",
-                border: "1px solid #1a3a1f",
-                borderRadius: "4px",
-                padding: "16px",
-                marginBottom: "12px",
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <div>
-                    <div style={{ fontSize: "12px", color: "#a3c9a8" }}>{sat.name} — Tier {sat.tier} → {sat.tier + 1}</div>
-                    <div style={{ fontSize: "9px", color: "#2d6a35", marginTop: "4px" }}>
-                      {sat.tier === 1 ? "LEO+MEO · Max 60° inclination" : "LEO+MEO+GEO · Max 90° inclination"}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: "16px", color: "#4ade80" }}>
-                    ${SHOP_PRICES.upgrade[sat.tier as keyof typeof SHOP_PRICES.upgrade].toLocaleString()}
-                  </div>
-                </div>
-                <button
-                  onClick={async () => {
-                    const price = SHOP_PRICES.upgrade[sat.tier as keyof typeof SHOP_PRICES.upgrade];
-                    if (money < price) return;
-                    const res = await fetch("/api/shop/upgrade-satellite", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ satelliteId: sat.id }),
-                    });
-                    if (res.ok) window.location.reload();
-                  }}
-                  disabled={money < SHOP_PRICES.upgrade[sat.tier as keyof typeof SHOP_PRICES.upgrade]}
-                  style={{
-                    width: "100%",
-                    background: "rgba(74,222,128,0.15)",
-                    border: "1px solid #4ade80",
-                    color: "#4ade80",
-                    padding: "8px",
-                    borderRadius: "4px",
-                    fontSize: "9px",
-                    letterSpacing: "2px",
-                    cursor: "pointer",
-                    opacity: money < SHOP_PRICES.upgrade[sat.tier as keyof typeof SHOP_PRICES.upgrade] ? 0.4 : 1,
-                  }}
-                >
-                  ▶ YÜKSELt
-                </button>
-              </div>
-            ))}
-
-            <button
-              onClick={() => setShowShop(false)}
-              style={{
-                width: "100%",
-                background: "none",
-                border: "1px solid #1a3a1f",
-                color: "#2d6a35",
-                padding: "10px",
-                borderRadius: "4px",
-                fontSize: "10px",
-                letterSpacing: "2px",
-                cursor: "pointer",
-                marginTop: "8px",
-              }}
-            >
-              KAPAT
-            </button>
-          </div>
-        </div>
-      )}
-      {showSatSelect && pendingMission && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 100,
-        }}>
-          <div style={{
-            background: "#0d1a0f",
-            border: "1px solid #1a3a1f",
-            borderRadius: "6px",
-            padding: "40px",
-            width: "380px",
-          }}>
-            <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#2d6a35", marginBottom: "8px" }}>GÖREV BAŞLAT</div>
-            <div style={{ fontSize: "16px", color: "#4ade80", letterSpacing: "2px", marginBottom: "4px" }}>
-              {pendingMission.flag} {pendingMission.country}
-            </div>
-            <div style={{ fontSize: "11px", color: "#a3c9a8", marginBottom: "24px" }}>{pendingMission.title}</div>
-
-            <div style={{ fontSize: "9px", letterSpacing: "3px", color: "#2d6a35", marginBottom: "12px" }}>UYDU SEÇ</div>
-
-            {satellites.filter(s => s.status === 'active').length === 0 && (
-              <div style={{ fontSize: "11px", color: "#f87171", marginBottom: "16px" }}>
-                Aktif uydu yok. Önce bir uydu fırlat.
-              </div>
-            )}
-
-            {satellites.filter(s => s.status === 'active').map(sat => {
-              const isBusy = assignments.some(a => a.satelliteId === sat.id);
-              return (
-                <div
-                  key={sat.id}
-                  onClick={async () => {
-                    if (isBusy) return;
-                    const res = await fetch("/api/mission/start", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ missionId: pendingMission.id, satelliteId: sat.id }),
-                    });
-                    if (res.ok) {
-                      const newAssignment = await res.json();
-                      setAssignments([...assignments, newAssignment]);
-                      setActiveMission(pendingMission);
-                      setShowSatSelect(false);
-                      setPendingMission(null);
-                    }
-                  }}
-                  style={{
-                    background: isBusy ? "rgba(255,255,255,0.02)" : "rgba(74,222,128,0.07)",
-                    border: `1px solid ${isBusy ? "#111f14" : "#2d6a35"}`,
-                    borderRadius: "4px",
-                    padding: "12px 16px",
-                    marginBottom: "8px",
-                    cursor: isBusy ? "not-allowed" : "pointer",
-                    opacity: isBusy ? 0.4 : 1,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: "11px", color: "#4ade80" }}>⬡ {sat.name}</div>
-                    <div style={{ fontSize: "9px", color: "#2d6a35", marginTop: "2px" }}>
-                      TİER {sat.tier} · {sat.orbitType} · {sat.inclination}°
-                    </div>
-                  </div>
-                  {isBusy && <span style={{ fontSize: "9px", color: "#f87171", letterSpacing: "1px" }}>MEŞGUL</span>}
-                </div>
-              );
-            })}
-
-            <button
-              onClick={() => { setShowSatSelect(false); setPendingMission(null); }}
-              style={{
-                width: "100%",
-                background: "none",
-                border: "1px solid #1a3a1f",
-                color: "#2d6a35",
-                padding: "10px",
-                borderRadius: "4px",
-                fontSize: "10px",
-                letterSpacing: "2px",
-                cursor: "pointer",
-                marginTop: "8px",
-              }}
-            >
-              İPTAL
-            </button>
-          </div>
-        </div>
-      )}
-      {showCancelConfirm && activeMission && (
-  <div style={{
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.7)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 100,
-  }}>
-    <div style={{
-      background: "#0d1a0f",
-      border: "1px solid #1a3a1f",
-      borderRadius: "6px",
-      padding: "40px",
-      width: "360px",
-    }}>
-      <div style={{ fontSize: "9px", letterSpacing: "4px", color: "#f87171", marginBottom: "8px" }}>UYARI</div>
-      <div style={{ fontSize: "16px", color: "#4ade80", letterSpacing: "2px", marginBottom: "16px" }}>GÖREVİ İPTAL ET</div>
-      <div style={{ fontSize: "11px", color: "#a3c9a8", lineHeight: "1.6", marginBottom: "8px" }}>
-        {activeMission.flag} {activeMission.country} — {activeMission.title}
-      </div>
-      <div style={{
-        background: "rgba(248,113,113,0.1)",
-        border: "1px solid #f87171",
-        borderRadius: "4px",
-        padding: "12px",
-        marginBottom: "24px",
-      }}>
-        <div style={{ fontSize: "9px", color: "#f87171", letterSpacing: "2px", marginBottom: "4px" }}>CEZA</div>
-        <div style={{ fontSize: "18px", color: "#f87171" }}>-${Math.floor(activeMission.reward / 2).toLocaleString()}</div>
-      </div>
-
-      <button
-        onClick={async () => {
-          const assignment = assignments.find(a => a.missionId === activeMission.id);
-          if (!assignment) return;
-          const res = await fetch("/api/mission/cancel", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ assignmentId: assignment.id }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setAssignments(assignments.filter(a => a.id !== assignment.id));
-            setMoney(data.newMoney);
-            setActiveMission(null);
-            setShowCancelConfirm(false);
-          }
-        }}
-        style={{
-          width: "100%",
-          background: "rgba(248,113,113,0.15)",
-          border: "1px solid #f87171",
-          color: "#f87171",
-          padding: "12px",
-          borderRadius: "4px",
-          fontSize: "10px",
-          letterSpacing: "3px",
-          cursor: "pointer",
-          marginBottom: "8px",
-        }}
-      >
-        ✕ İPTAL ET
-      </button>
-      <button
-        onClick={() => setShowCancelConfirm(false)}
-        style={{
-          width: "100%",
-          background: "none",
-          border: "1px solid #1a3a1f",
-          color: "#2d6a35",
-          padding: "10px",
-          borderRadius: "4px",
-          fontSize: "10px",
-          letterSpacing: "2px",
-          cursor: "pointer",
-        }}
-      >
-        GERİ DÖN
-      </button>
-    </div>
-  </div>
+{showEdit && (
+  <EditProfileModal
+    editUsername={editUsername}
+    editCompanyName={editCompanyName}
+    editError={editError}
+    editLoading={editLoading}
+    onUsernameChange={setEditUsername}
+    onCompanyNameChange={setEditCompanyName}
+    onSave={handleEdit}
+    onClose={() => { setShowEdit(false); setEditError(""); }}
+  />
 )}
+
+{showShop && (
+  <ShopModal
+    money={money}
+    level={level}
+    satellites={satellites}
+    onClose={() => setShowShop(false)}
+  />
+)}
+
+{selectedSat && (
+  <OrbitModal
+    satellite={selectedSat}
+    onChange={setSelectedSat}
+    onSave={async () => {
+      const res = await fetch("/api/satellite/update-orbit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          satelliteId: selectedSat.id,
+          inclination: selectedSat.inclination,
+          orbitType: selectedSat.orbitType,
+          geoLongitude: selectedSat.geoLongitude,
+        }),
+      });
+      if (res.ok) {
+        setSatellites(satellites.map(s => s.id === selectedSat.id ? selectedSat : s));
+        setSelectedSat(null);
+      }
+    }}
+    onClose={() => setSelectedSat(null)}
+  />
+)}
+
+{showSatSelect && pendingMission && (
+  <SatSelectModal
+    mission={pendingMission}
+    satellites={satellites}
+    assignments={assignments}
+    onSelect={async (satelliteId) => {
+      const res = await fetch("/api/mission/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ missionId: pendingMission.id, satelliteId }),
+      });
+      if (res.ok) {
+        const newAssignment = await res.json();
+        setAssignments([...assignments, newAssignment]);
+        setActiveMission(pendingMission);
+        setShowSatSelect(false);
+        setPendingMission(null);
+      }
+    }}
+    onClose={() => { setShowSatSelect(false); setPendingMission(null); }}
+  />
+)}
+
+{showCancelConfirm && activeMission && (
+  <CancelConfirmModal
+    mission={activeMission}
+    onConfirm={async () => {
+      const assignment = assignments.find(a => a.missionId === activeMission.id);
+      if (!assignment) return;
+      const res = await fetch("/api/mission/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId: assignment.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAssignments(assignments.filter(a => a.id !== assignment.id));
+        setMoney(data.newMoney);
+        setActiveMission(null);
+        setShowCancelConfirm(false);
+      }
+    }}
+    onClose={() => setShowCancelConfirm(false)}
+  />
+)}
+     {selectedMission && (
+  <MissionDetailPanel
+    mission={selectedMission}
+    onAccept={handleAccept}
+    onClose={() => setSelectedMission(null)}
+  />
+)}
+      
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
