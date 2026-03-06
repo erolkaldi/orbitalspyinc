@@ -9,6 +9,7 @@ type Props = {
   satellites: SatelliteData[];
   missions: MissionData[];
   assignments: MissionAssignment[];
+  gameDate: Date;
 }
 
 
@@ -24,13 +25,14 @@ const TIER_COLORS: Record<number, string> = {
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { MissionData, SatelliteData, MissionAssignment } from "@/types/game";
-import {  SLOT_PER_LEVEL } from '@/lib/gameConfig';
+import { SLOT_PER_LEVEL } from '@/lib/gameConfig';
 import EditProfileModal from '@/components/modals/EditProfileModal'
 import ShopModal from '@/components/modals/ShopModal'
 import OrbitModal from '@/components/modals/OrbitModal'
 import SatSelectModal from '@/components/modals/SatSelectModal'
 import CancelConfirmModal from '@/components/modals/CancelConfirmModal'
 import MissionDetailPanel from "./modals/MissionDetailPanel";
+import { advanceGameDate, formatGameDate } from '@/lib/gameTime'
 const WorldMap = dynamic(() => import("@/components/WorldMap"), { ssr: false });
 
 
@@ -41,9 +43,12 @@ const WorldMap = dynamic(() => import("@/components/WorldMap"), { ssr: false });
 
 export default function OrbitalSpyInc({ username, companyName, money: initialMoney,
   level: initialLevel, satellites: initialSatellites, missions,
-  assignments: initialAssignments }: Props) {
+  assignments: initialAssignments, gameDate: initialGameDate }: Props) {
+  const [gameDate, setGameDate] = useState(new Date(initialGameDate));
   const [selectedMission, setSelectedMission] = useState<MissionData | null>(null);
-  const [activeMission, setActiveMission] = useState<MissionData | null>(null);
+  const [activeMission, setActiveMission] = useState<MissionData | null>(
+  missions.find(m => initialAssignments.some(a => a.missionId === m.id)) ?? null
+);
   const [money, setMoney] = useState(initialMoney);
   const [level, setLevel] = useState(initialLevel);
   const [satellites, setSatellites] = useState(initialSatellites);
@@ -59,8 +64,11 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
   const [assignments, setAssignments] = useState(initialAssignments);
   const [showSatSelect, setShowSatSelect] = useState(false);
   const [pendingMission, setPendingMission] = useState<MissionData | null>(null);
-const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const satSlots = level * SLOT_PER_LEVEL;
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
+
   useEffect(() => {
     setCurrentTime(new Date().toUTCString().slice(0, 25).toUpperCase());
     const interval = setInterval(() => {
@@ -92,6 +100,51 @@ const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     }
     setEditLoading(false);
   };
+  useEffect(() => {
+    const activeAssignment = assignments.find(a => a.missionId === activeMission?.id);
+    if (!activeAssignment?.endsAt) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const end = new Date(activeAssignment.endsAt!);
+      const diff = end.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeLeft("TAMAMLANDI");
+        clearInterval(interval);
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeMission, assignments]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const newDate = advanceGameDate(gameDate, 2);
+      setGameDate(newDate);
+
+      await fetch("/api/game/sync-time", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameDate: newDate.toISOString() }),
+      });
+    }, 2 * 60 * 1000); // 2 gerçek dakika
+
+    return () => clearInterval(interval);
+  }, [gameDate]);
+  useEffect(() => {
+  const handleBeforeUnload = () => {
+    navigator.sendBeacon("/api/game/sync-time", JSON.stringify({ gameDate: gameDate.toISOString() }));
+  };
+
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+}, [gameDate]);
   return (
     <div style={{
       display: "flex",
@@ -289,24 +342,64 @@ const [showCancelConfirm, setShowCancelConfirm] = useState(false);
             }}>
               <div style={{ fontSize: "10px", color: "#4ade80", marginBottom: "6px" }}>{activeMission.flag} {activeMission.country}</div>
               <div style={{ fontSize: "11px", color: "#a3c9a8", lineHeight: "1.4", marginBottom: "10px" }}>{activeMission.title}</div>
+
               <div style={{
                 background: "#0d1a0f",
                 height: "4px",
                 borderRadius: "2px",
                 overflow: "hidden",
+                marginBottom: "6px",
               }}>
                 <div style={{
                   height: "100%",
-                  width: "45%",
+                  width: timeLeft === "TAMAMLANDI" ? "100%" : "45%",
                   background: "linear-gradient(90deg, #2d6a35, #4ade80)",
-                  animation: "pulse 2s infinite",
+                  animation: timeLeft === "TAMAMLANDI" ? "none" : "pulse 2s infinite",
                 }} />
               </div>
-              <div style={{ fontSize: "9px", color: "#2d6a35", marginTop: "6px", letterSpacing: "1px" }}>TARAMA DEVAM EDİYOR...</div>
+
+              <div style={{ fontSize: "9px", color: "#2d6a35", letterSpacing: "1px", marginBottom: "10px" }}>
+                {timeLeft === "TAMAMLANDI" ? "✓ GÖREV TAMAMLANDI" : `⏱ ${timeLeft} kaldı`}
+              </div>
+
+              {timeLeft === "TAMAMLANDI" && (
+                <button
+                  onClick={async () => {
+                    const assignment = assignments.find(a => a.missionId === activeMission.id);
+                    if (!assignment) return;
+                    const res = await fetch("/api/mission/complete", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ assignmentId: assignment.id }),
+                    });
+                    if (res.ok) {
+                      const data = await res.json();
+                      setMoney(data.newMoney);
+                      setAssignments(assignments.filter(a => a.id !== assignment.id));
+                      setActiveMission(null);
+                      setTimeLeft("");
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                    background: "rgba(74,222,128,0.15)",
+                    border: "1px solid #4ade80",
+                    color: "#4ade80",
+                    padding: "6px",
+                    borderRadius: "4px",
+                    fontSize: "9px",
+                    letterSpacing: "2px",
+                    cursor: "pointer",
+                    marginBottom: "8px",
+                  }}
+                >
+                  ▶ ÖDÜLÜ AL
+                </button>
+              )}
+
               <button
                 onClick={() => setShowCancelConfirm(true)}
                 style={{
-                  marginTop: "10px",
                   width: "100%",
                   background: "none",
                   border: "1px solid #f87171",
@@ -379,7 +472,7 @@ const [showCancelConfirm, setShowCancelConfirm] = useState(false);
             </button>
           ))}
           <div style={{ marginLeft: "auto", fontSize: "9px", color: "#2d6a35", letterSpacing: "2px" }}>
-            {currentTime} UTC
+            {formatGameDate(gameDate)}
           </div>
         </div>
 
@@ -397,7 +490,7 @@ const [showCancelConfirm, setShowCancelConfirm] = useState(false);
                 return (
                   <div
                     key={m.id}
-                    onClick={() => !locked && setSelectedMission(m)}
+                    onClick={() => !locked && !isActive && setSelectedMission(m)}
                     style={{
                       background: isActive ? "rgba(74,222,128,0.1)" : locked ? "rgba(255,255,255,0.02)" : "rgba(74,222,128,0.05)",
                       border: `1px solid ${isActive ? "#4ade80" : locked ? "#111f14" : selectedMission?.id === m.id ? "#4ade80" : "#1a3a1f"}`,
@@ -417,7 +510,10 @@ const [showCancelConfirm, setShowCancelConfirm] = useState(false);
                         <span style={{ fontSize: "11px", color: "#a3c9a8", letterSpacing: "1px" }}>{m.country.toUpperCase()}</span>
                         {m.urgent && <span style={{ fontSize: "8px", color: "#f87171", letterSpacing: "2px", border: "1px solid #f87171", padding: "1px 5px", borderRadius: "2px" }}>ACİL</span>}
                         <span style={{ fontSize: "8px", letterSpacing: "1px", color: TIER_COLORS[m.tier], border: `1px solid ${TIER_COLORS[m.tier]}`, padding: "1px 5px", borderRadius: "2px" }}>T{m.tier}</span>
+                        <span style={{ fontSize: "12px", color: "#2d6a35", letterSpacing: "1px" }}>{m.type.toUpperCase()}</span>
+                        <span style={{ fontSize: "12px", color: "#2d6a35", letterSpacing: "1px" }}>⏱ {m.duration}sa</span>
                         {locked && <span style={{ fontSize: "8px", color: "#2d6a35", letterSpacing: "2px" }}>🔒 KİLİTLİ</span>}
+                        {isActive && <span style={{ fontSize: "8px", color: "#4ade80", letterSpacing: "2px", border: "1px solid #4ade80", padding: "1px 5px", borderRadius: "2px" }}>AKTİF</span>}
                       </div>
                       <div style={{ fontSize: "13px", color: locked ? "#2d6a35" : "#c8e6c9" }}>{m.title}</div>
                     </div>
@@ -425,11 +521,6 @@ const [showCancelConfirm, setShowCancelConfirm] = useState(false);
                       <div style={{ fontSize: "16px", color: "#4ade80", fontWeight: "bold" }}>${m.reward.toLocaleString()}</div>
                       <div style={{ fontSize: "9px", color: "#2d6a35", letterSpacing: "1px" }}>ÖDÜL</div>
                     </div>
-                    {isActive && (
-                      <span style={{ fontSize: "8px", color: "#4ade80", letterSpacing: "2px", border: "1px solid #4ade80", padding: "1px 5px", borderRadius: "2px" }}>
-                        AKTİF
-                      </span>
-                    )}
                   </div>
                 );
               })}
@@ -446,105 +537,105 @@ const [showCancelConfirm, setShowCancelConfirm] = useState(false);
           </div>
         )}
       </div>
-{showEdit && (
-  <EditProfileModal
-    editUsername={editUsername}
-    editCompanyName={editCompanyName}
-    editError={editError}
-    editLoading={editLoading}
-    onUsernameChange={setEditUsername}
-    onCompanyNameChange={setEditCompanyName}
-    onSave={handleEdit}
-    onClose={() => { setShowEdit(false); setEditError(""); }}
-  />
-)}
+      {showEdit && (
+        <EditProfileModal
+          editUsername={editUsername}
+          editCompanyName={editCompanyName}
+          editError={editError}
+          editLoading={editLoading}
+          onUsernameChange={setEditUsername}
+          onCompanyNameChange={setEditCompanyName}
+          onSave={handleEdit}
+          onClose={() => { setShowEdit(false); setEditError(""); }}
+        />
+      )}
 
-{showShop && (
-  <ShopModal
-    money={money}
-    level={level}
-    satellites={satellites}
-    onClose={() => setShowShop(false)}
-  />
-)}
+      {showShop && (
+        <ShopModal
+          money={money}
+          level={level}
+          satellites={satellites}
+          onClose={() => setShowShop(false)}
+        />
+      )}
 
-{selectedSat && (
-  <OrbitModal
-    satellite={selectedSat}
-    onChange={setSelectedSat}
-    onSave={async () => {
-      const res = await fetch("/api/satellite/update-orbit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          satelliteId: selectedSat.id,
-          inclination: selectedSat.inclination,
-          orbitType: selectedSat.orbitType,
-          geoLongitude: selectedSat.geoLongitude,
-        }),
-      });
-      if (res.ok) {
-        setSatellites(satellites.map(s => s.id === selectedSat.id ? selectedSat : s));
-        setSelectedSat(null);
-      }
-    }}
-    onClose={() => setSelectedSat(null)}
-  />
-)}
+      {selectedSat && (
+        <OrbitModal
+          satellite={selectedSat}
+          onChange={setSelectedSat}
+          onSave={async () => {
+            const res = await fetch("/api/satellite/update-orbit", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                satelliteId: selectedSat.id,
+                inclination: selectedSat.inclination,
+                orbitType: selectedSat.orbitType,
+                geoLongitude: selectedSat.geoLongitude,
+              }),
+            });
+            if (res.ok) {
+              setSatellites(satellites.map(s => s.id === selectedSat.id ? selectedSat : s));
+              setSelectedSat(null);
+            }
+          }}
+          onClose={() => setSelectedSat(null)}
+        />
+      )}
 
-{showSatSelect && pendingMission && (
-  <SatSelectModal
-    mission={pendingMission}
-    satellites={satellites}
-    assignments={assignments}
-    onSelect={async (satelliteId) => {
-      const res = await fetch("/api/mission/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ missionId: pendingMission.id, satelliteId }),
-      });
-      if (res.ok) {
-        const newAssignment = await res.json();
-        setAssignments([...assignments, newAssignment]);
-        setActiveMission(pendingMission);
-        setShowSatSelect(false);
-        setPendingMission(null);
-      }
-    }}
-    onClose={() => { setShowSatSelect(false); setPendingMission(null); }}
-  />
-)}
+      {showSatSelect && pendingMission && (
+        <SatSelectModal
+          mission={pendingMission}
+          satellites={satellites}
+          assignments={assignments}
+          onSelect={async (satelliteId) => {
+            const res = await fetch("/api/mission/start", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ missionId: pendingMission.id, satelliteId }),
+            });
+            if (res.ok) {
+              const newAssignment = await res.json();
+              setAssignments([...assignments, newAssignment]);
+              setActiveMission(pendingMission);
+              setShowSatSelect(false);
+              setPendingMission(null);
+            }
+          }}
+          onClose={() => { setShowSatSelect(false); setPendingMission(null); }}
+        />
+      )}
 
-{showCancelConfirm && activeMission && (
-  <CancelConfirmModal
-    mission={activeMission}
-    onConfirm={async () => {
-      const assignment = assignments.find(a => a.missionId === activeMission.id);
-      if (!assignment) return;
-      const res = await fetch("/api/mission/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId: assignment.id }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAssignments(assignments.filter(a => a.id !== assignment.id));
-        setMoney(data.newMoney);
-        setActiveMission(null);
-        setShowCancelConfirm(false);
-      }
-    }}
-    onClose={() => setShowCancelConfirm(false)}
-  />
-)}
-     {selectedMission && (
-  <MissionDetailPanel
-    mission={selectedMission}
-    onAccept={handleAccept}
-    onClose={() => setSelectedMission(null)}
-  />
-)}
-      
+      {showCancelConfirm && activeMission && (
+        <CancelConfirmModal
+          mission={activeMission}
+          onConfirm={async () => {
+            const assignment = assignments.find(a => a.missionId === activeMission.id);
+            if (!assignment) return;
+            const res = await fetch("/api/mission/cancel", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ assignmentId: assignment.id }),
+            });
+            if (res.ok) {
+              const data = await res.json();
+              setAssignments(assignments.filter(a => a.id !== assignment.id));
+              setMoney(data.newMoney);
+              setActiveMission(null);
+              setShowCancelConfirm(false);
+            }
+          }}
+          onClose={() => setShowCancelConfirm(false)}
+        />
+      )}
+      {selectedMission && (
+        <MissionDetailPanel
+          mission={selectedMission}
+          onAccept={handleAccept}
+          onClose={() => setSelectedMission(null)}
+        />
+      )}
+
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }

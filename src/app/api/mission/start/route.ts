@@ -26,12 +26,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Uydu meşgul.' }, { status: 400 })
   }
 
+  const mission = await prisma.mission.findUnique({
+    where: { id: missionId },
+  })
+
+  if (!mission) {
+    return NextResponse.json({ message: 'Görev bulunamadı.' }, { status: 404 })
+  }
+
+  const endsAt = new Date(Date.now() + mission.duration * 60 * 1000)
+
   const assignment = await prisma.missionAssignment.create({
     data: {
       missionId,
       satelliteId,
       userId: user.id,
       status: 'active',
+      endsAt,
     },
   })
 

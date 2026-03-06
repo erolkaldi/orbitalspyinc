@@ -8,6 +8,8 @@ export type MissionData = {
   urgent: boolean;
   latitude: number;
   longitude: number;
+  type: string;
+  duration: number;
 }
 
 export type SatelliteData = {
@@ -28,4 +30,6 @@ export type MissionAssignment = {
   userId: string;
   status: string;
   startedAt: Date;
+  completedAt: Date | null;
+  endsAt: Date | null;
 }

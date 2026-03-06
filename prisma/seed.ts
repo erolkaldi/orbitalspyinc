@@ -11,13 +11,13 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   await prisma.mission.deleteMany()
 
-  await prisma.mission.createMany({
+await prisma.mission.createMany({
     data: [
-      { country: "Almanya", flag: "🇩🇪", title: "Doğu sınırı askeri hareket izleme", reward: 4200, tier: 1, urgent: true, latitude: 52, longitude: 13 },
-      { country: "Japonya", flag: "🇯🇵", title: "Nükleer tesis inşaat raporu", reward: 8800, tier: 2, urgent: false, latitude: 35, longitude: 139 },
-      { country: "Brezilya", flag: "🇧🇷", title: "Amazon kaynak tespiti", reward: 3100, tier: 1, urgent: false, latitude: -15, longitude: -47 },
-      { country: "Hindistan", flag: "🇮🇳", title: "Kuzey sınırı hava sahası analizi", reward: 5500, tier: 2, urgent: true, latitude: 28, longitude: 77 },
-      { country: "Norveç", flag: "🇳🇴", title: "Arktik buz örtüsü değişim raporu", reward: 2900, tier: 1, urgent: false, latitude: 60, longitude: 8 },
+      { country: "Almanya", flag: "🇩🇪", title: "Doğu sınırı askeri hareket izleme", reward: 4200, tier: 1, urgent: true, latitude: 52, longitude: 13, type: "surveillance", duration: 12 },
+      { country: "Japonya", flag: "🇯🇵", title: "Nükleer tesis inşaat raporu", reward: 8800, tier: 2, urgent: false, latitude: 35, longitude: 139, type: "intelligence", duration: 48 },
+      { country: "Brezilya", flag: "🇧🇷", title: "Amazon kaynak tespiti", reward: 3100, tier: 1, urgent: false, latitude: -15, longitude: -47, type: "surveillance", duration: 12 },
+      { country: "Hindistan", flag: "🇮🇳", title: "Kuzey sınırı hava sahası analizi", reward: 5500, tier: 2, urgent: true, latitude: 28, longitude: 77, type: "emergency", duration: 6 },
+      { country: "Norveç", flag: "🇳🇴", title: "Arktik buz örtüsü değişim raporu", reward: 2900, tier: 1, urgent: false, latitude: 60, longitude: 8, type: "reconnaissance", duration: 24 },
     ],
   })
 

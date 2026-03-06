@@ -13,3 +13,12 @@ export const SHOP_PRICES = {
     2: 15000, // Tier 2 → 3
   }
 } as const
+
+export const MISSION_TYPES = {
+  surveillance: { label: "Gözetleme", duration: 12, rewardMultiplier: 1 },
+  reconnaissance: { label: "Keşif", duration: 24, rewardMultiplier: 2 },
+  intelligence: { label: "İstihbarat", duration: 48, rewardMultiplier: 3 },
+  emergency: { label: "Acil", duration: 6, rewardMultiplier: 1.5 },
+} as const
+
+export type MissionType = keyof typeof MISSION_TYPES

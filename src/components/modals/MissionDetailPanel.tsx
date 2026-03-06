@@ -27,10 +27,12 @@ export default function MissionDetailPanel({ mission, onAccept, onClose }: Props
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
         {[
-          { label: "ÖDÜL", value: `$${mission.reward.toLocaleString()}` },
-          { label: "GEREKLİ TİER", value: `T${mission.tier}` },
-          { label: "ÖNCELİK", value: mission.urgent ? "ACİL" : "NORMAL" },
-        ].map(({ label, value }) => (
+  { label: "ÖDÜL", value: `$${mission.reward.toLocaleString()}` },
+  { label: "TİP", value: mission.type.toUpperCase() },
+  { label: "SÜRE", value: `${mission.duration} saat` },
+  { label: "GEREKLİ TİER", value: `T${mission.tier}` },
+  { label: "ÖNCELİK", value: mission.urgent ? "ACİL" : "NORMAL" },
+].map(({ label, value }) => (
           <div key={label} style={{
             display: "flex",
             justifyContent: "space-between",

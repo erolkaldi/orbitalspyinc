@@ -34,6 +34,7 @@ return (
     satellites={user!.satellites}
     missions={missions}
     assignments={user!.assignments}
+    gameDate={user!.gameDate}
   />
 )
 }

@@ -26,6 +26,8 @@ model User {
   isOnboarded   Boolean   @default(false)
   assignments MissionAssignment[]
   password      String?
+  gameDate      DateTime @default(dbgenerated("'2030-01-01 00:00:00'::timestamp"))
+  lastSyncAt    DateTime?
 }
 
 model Satellite {
@@ -82,6 +84,8 @@ model Mission {
   urgent      Boolean  @default(false)
   latitude    Float
   longitude   Float
+  type        String   @default("surveillance")
+  duration    Int      @default(12)  // dakika cinsinden
   createdAt   DateTime @default(now())
 
   assignments MissionAssignment[]
@@ -91,8 +95,10 @@ model MissionAssignment {
   missionId   String
   satelliteId String
   userId      String
-  status      String   @default("active") // active, completed, failed
+  status      String   @default("active")
   startedAt   DateTime @default(now())
+  completedAt DateTime?
+  endsAt      DateTime?
 
   mission     Mission   @relation(fields: [missionId], references: [id])
   satellite   Satellite @relation(fields: [satelliteId], references: [id])
