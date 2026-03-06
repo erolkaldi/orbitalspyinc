@@ -25,6 +25,7 @@ model User {
   companyName   String?
   isOnboarded   Boolean   @default(false)
   assignments MissionAssignment[]
+  password      String?
 }
 
 model Satellite {

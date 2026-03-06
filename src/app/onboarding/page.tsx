@@ -57,7 +57,7 @@ export default function Onboarding() {
                     <input
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        placeholder="agent_zero"
+                        placeholder="Kod adını gir"
                         style={{
                             width: "100%",
                             background: "rgba(74,222,128,0.05)",
@@ -78,7 +78,7 @@ export default function Onboarding() {
                     <input
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Dark Horizon Intelligence"
+                        placeholder="Şirketin için bir isim gir"
                         style={{
                             width: "100%",
                             background: "rgba(74,222,128,0.05)",

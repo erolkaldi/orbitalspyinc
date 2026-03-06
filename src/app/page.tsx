@@ -8,8 +8,8 @@ export default async function Home() {
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.email) {
-    redirect('/api/auth/signin')
-  }
+  redirect('/login')
+}
 
   const user = await prisma.user.findUnique({
   where: { email: session.user.email! },
@@ -22,11 +22,13 @@ export default async function Home() {
 })
 
 const missions = await prisma.mission.findMany()
-
+if (!user?.isOnboarded) {
+  redirect('/onboarding')
+}
 return (
   <OrbitalSpyInc
-    username={user!.username!}
-    companyName={user!.companyName!}
+    username={user!.username ?? ''}
+    companyName={user!.companyName ?? ''}
     money={user!.money}
     level={user!.level}
     satellites={user!.satellites}
