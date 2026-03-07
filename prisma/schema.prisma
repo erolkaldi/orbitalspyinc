@@ -103,4 +103,5 @@ model MissionAssignment {
   mission     Mission   @relation(fields: [missionId], references: [id])
   satellite   Satellite @relation(fields: [satelliteId], references: [id])
   user        User      @relation(fields: [userId], references: [id])
+  reportData    Json?
 }

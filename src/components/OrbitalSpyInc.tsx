@@ -32,7 +32,9 @@ import OrbitModal from '@/components/modals/OrbitModal'
 import SatSelectModal from '@/components/modals/SatSelectModal'
 import CancelConfirmModal from '@/components/modals/CancelConfirmModal'
 import MissionDetailPanel from "./modals/MissionDetailPanel";
-import { advanceGameDate, formatGameDate } from '@/lib/gameTime'
+import { advanceGameDate, formatGameDate } from '@/lib/gameTime';
+import MissionReportModal from '@/components/modals/MissionReportModal';
+import { useRouter } from 'next/navigation';
 const WorldMap = dynamic(() => import("@/components/WorldMap"), { ssr: false });
 
 
@@ -47,8 +49,10 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
   const [gameDate, setGameDate] = useState(new Date(initialGameDate));
   const [selectedMission, setSelectedMission] = useState<MissionData | null>(null);
   const [activeMission, setActiveMission] = useState<MissionData | null>(
-  missions.find(m => initialAssignments.some(a => a.missionId === m.id)) ?? null
-);
+    missions.find(m => initialAssignments.some(a => a.missionId === m.id)) ?? null
+  );
+  const router = useRouter();
+  const [missionReport, setMissionReport] = useState<{ report: any; reward: number; mission: MissionData } | null>(null);
   const [money, setMoney] = useState(initialMoney);
   const [level, setLevel] = useState(initialLevel);
   const [satellites, setSatellites] = useState(initialSatellites);
@@ -138,13 +142,13 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
     return () => clearInterval(interval);
   }, [gameDate]);
   useEffect(() => {
-  const handleBeforeUnload = () => {
-    navigator.sendBeacon("/api/game/sync-time", JSON.stringify({ gameDate: gameDate.toISOString() }));
-  };
+    const handleBeforeUnload = () => {
+      navigator.sendBeacon("/api/game/sync-time", JSON.stringify({ gameDate: gameDate.toISOString() }));
+    };
 
-  window.addEventListener("beforeunload", handleBeforeUnload);
-  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-}, [gameDate]);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [gameDate]);
   return (
     <div style={{
       display: "flex",
@@ -376,6 +380,7 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
                       const data = await res.json();
                       setMoney(data.newMoney);
                       setAssignments(assignments.filter(a => a.id !== assignment.id));
+                      setMissionReport({ report: data.report, reward: data.reward, mission: activeMission });
                       setActiveMission(null);
                       setTimeLeft("");
                     }
@@ -397,7 +402,7 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
                 </button>
               )}
 
-              <button
+              {timeLeft!="TAMAMLANDI" && (<button
                 onClick={() => setShowCancelConfirm(true)}
                 style={{
                   width: "100%",
@@ -412,7 +417,7 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
                 }}
               >
                 ✕ İPTAL ET
-              </button>
+              </button>)}
             </div>
           ) : (
             <div style={{ fontSize: "10px", color: "#1a3a1f", letterSpacing: "1px", textAlign: "center", padding: "20px 0" }}>
@@ -619,7 +624,6 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
             });
             if (res.ok) {
               const data = await res.json();
-              setAssignments(assignments.filter(a => a.id !== assignment.id));
               setMoney(data.newMoney);
               setActiveMission(null);
               setShowCancelConfirm(false);
@@ -635,7 +639,18 @@ export default function OrbitalSpyInc({ username, companyName, money: initialMon
           onClose={() => setSelectedMission(null)}
         />
       )}
-
+      {missionReport && (
+        <MissionReportModal
+          mission={missionReport.mission}
+          report={missionReport.report}
+          reward={missionReport.reward}
+          onClose={() => {
+            setAssignments(assignments.filter(a => a.missionId !== missionReport.mission.id));
+            setMissionReport(null);
+            router.refresh();
+          }}
+        />
+      )}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
